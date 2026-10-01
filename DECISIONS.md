@@ -49,5 +49,23 @@ My decisions at each review point, recorded as I gave them. Source material for 
 
 **Result:** case 5 is now "Can you recommend a good pizza place near campus?", expected `unknown`, urgency not checked. Case 4 stays `high`, since money left the customer's card.
 
+## 5. First run, MiniMax (Oct 1, 2026)
+
+5/5 passed; 1,653 tokens in, 457 out. Committed as "Classifier and eval, first run".
+
+## 6. Second model, MiMo (Oct 1, 2026)
+
+**Result:** 4/5. `not_support` failed because the reply was cut off mid-word (`{"category": "unknown", "urgency": "relev`) and was not valid JSON. Three diagnostic re-sends of the same message all came back correct (`unknown` / `irrelevant`).
+
+**Options I was given:**
+- A. Model error: the expected answer is unambiguous and MiMo agreed with it three times; the failure is unreliable output from the cheaper model.
+- B. Judgment call in the test.
+- Optional: add the reason the reply ended to the "not JSON" error message, as a separate commit.
+
+**My response, verbatim:**
+> A
+
+**Result:** recorded as a model error in `CHECKS.md`. The optional error-message change was not taken.
+
 ## Conventions note
 The Conventions section of CLAUDE.md uses the defaults from my lab guide (Python, MiniMax as default, snake_case file names), not choices confirmed with a team.
