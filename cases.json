@@ -1,0 +1,43 @@
+[
+  {
+    "id": "billing_clear",
+    "message": "I was charged twice for my subscription this month. Please refund the extra charge.",
+    "categories": [
+      "billing"
+    ],
+    "urgency": "high"
+  },
+  {
+    "id": "technical_clear",
+    "message": "The Export to PDF button does nothing when I click it. I can still print the page to PDF from my browser, but please fix the button.",
+    "categories": [
+      "technical"
+    ],
+    "urgency": "medium"
+  },
+  {
+    "id": "sales_clear",
+    "message": "We're thinking about upgrading our team from the Basic plan to Pro. What extra features would we get?",
+    "categories": [
+      "sales"
+    ],
+    "urgency": "low"
+  },
+  {
+    "id": "billing_or_technical",
+    "message": "Your app crashed while I was checking out, and now there's a charge on my card but no order confirmation.",
+    "categories": [
+      "billing",
+      "technical"
+    ],
+    "urgency": "high"
+  },
+  {
+    "id": "not_support",
+    "message": "Can you recommend a good pizza place near campus?",
+    "categories": [
+      "unknown"
+    ],
+    "urgency": null
+  }
+]
