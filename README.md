@@ -1,45 +1,76 @@
-# Artifact-chain template
+# Support-message classifier with a five-case eval
 
-Starting point for major project submissions in CPSC 415 (AI Integration, Trinity College). Click **Use this template** on GitHub to create your own repository from it. Do not fork.
+CPSC 415, Week 3. A command-line program that takes one customer-support message, asks a model to classify it, and prints JSON with `category` (billing, technical, sales, or unknown), `urgency` (low, medium, high, or irrelevant for non-support messages), and a one-sentence `reason`. An eval runs five messages with known answers and compares two models.
 
-The course follows Anthropic's [AI-Native SDLC Playbook](https://claude.com/blog/the-ai-native-sdlc-playbook): every stage of the work leaves a short, version-controlled artifact. The agent writes most of the code. You decide what gets built, steer, verify, and explain every choice. These files are how you prove you understood what the agent built.
+The intent is in [`intent/classifier.md`](intent/classifier.md) and the design in [`spec.md`](spec.md).
 
-## Early labs
+## How to run
 
-Week 1 uses the minimal repository described in the course handout. Later introductory labs complete only the stages assigned so far. This template describes the full chain for team projects and the final portfolio; it does not require unintroduced artifacts in Week 1. Project languages are chosen and justified, with one separate guided exercise in an unfamiliar language.
+Python 3.9 or later, standard library only. Set three environment variables:
 
-## The chain
+```bash
+export CHAT_BASE_URL=https://openrouter.ai/api/v1
+export CHAT_MODEL=minimax/minimax-m3          # or xiaomi/mimo-v2.6-flash
+export OPENROUTER_API_KEY=<your key>
+```
 
-| Stage | File | Written by | Approved by |
+Classify one message:
+
+```bash
+python3 classifier.py "I was charged twice this month."
+```
+
+Output is the JSON object on standard output and a usage line (model, input tokens, output tokens) on standard error. Exit code 0 on success, 1 when the model's reply is unusable, 2 when a setting or the message is missing.
+
+Run the eval:
+
+```bash
+python3 eval.py
+```
+
+It prints PASS or FAIL for each case in `cases.json` and a summary line with the score and total tokens.
+
+## The five cases
+
+| # | Message | Expected | What it is there to catch |
 |---|---|---|---|
-| Plan | `intent/<name>.md` | The agent, after interviewing you | You |
-| Design | `spec.md` | The agent, from the approved intent | You, against the intent |
-| Build | `plan.md`, then code on a branch | The agent | You, before any code |
-| Test | tests, lint, CI | The agent | You confirm the loop actually ran |
-| Deploy | a pull request reviewed against `REVIEW.md` | A separate reviewing agent | You merge |
-| Maintain | a new `intent/<name>.md` | Triggered by a bug, a ticket, or a model change | You triage |
+| 1 | "I was charged twice for my subscription this month. Please refund the extra charge." | billing, high | A clear billing case where money was lost |
+| 2 | "The Export to PDF button does nothing when I click it. I can still print the page to PDF from my browser, but please fix the button." | technical, medium | Whether the model applies the rule that a workaround makes it medium |
+| 3 | "We're thinking about upgrading our team from the Basic plan to Pro. What extra features would we get?" | sales, low | A clear sales question; "plan" should not pull it into billing |
+| 4 | "Your app crashed while I was checking out, and now there's a charge on my card but no order confirmation." | billing or technical, high | The ambiguous case: either category passes; urgency is high because money left the customer's card |
+| 5 | "Can you recommend a good pizza place near campus?" | unknown (urgency not checked) | A deceptive non-support message: it is phrased as a request, and "recommend" could pull a model toward sales |
 
-`CLAUDE.md` and `REVIEW.md` travel with the repo and are graded artifacts.
+## Two-model comparison
 
-## Rules that are graded
+From [`CHECKS.md`](CHECKS.md), all runs on Oct 1, 2026:
 
-- Intent and spec exist before code. Plan is approved before implementation. The commit history shows it.
-- One pull request per feature, from a branch, reviewed before merge. Do not commit to `main` directly after the first commit.
-- `spec.md` states the **language** and the **model** for each component and why.
-- `ANNOTATION.md` answers the four questions for the finished project.
-- No secrets in the repo. `.claude/settings.local.json` and `.env` are ignored; the `.example` file shows the shape.
+| Model | Cases passed | Failed case and how | Tokens in | Tokens out |
+|---|---|---|---|---|
+| `minimax/minimax-m3` | 5/5 | None | 1,653 | 457 |
+| `xiaomi/mimo-v2.6-flash` | 4/5 | `not_support`: the reply was cut off mid-word (`{"category": "unknown", "urgency": "relev`), so it was not valid JSON and counted as a FAIL | 860 | 366 |
+| Local model | Not run | No local model installed | | |
 
-## Submitting
+MiniMax passed all five cases; MiMo passed four, failing the deceptive case because its reply was cut off mid-word, although three re-sends of that message all came back `unknown` / `irrelevant`. MiMo counted about half as many input tokens and its run cost about a quarter as much ($0.0002 against $0.0008 at listed prices).
 
-Tag the commit you are submitting and put the repository URL plus the tag on Moodle:
+## One correction I made to the spec
 
+The draft spec pulled the JSON out of any surrounding text. Kousen's setup notes say text around the answer should count as a failed case, so I tightened it: formatting marks like code fences are allowed, but any extra words make the case fail. That rule is what caught MiMo's cut-off reply on the pizza case.
+
+## One line of code I can explain
+
+In `classifier.py`, inside `parse_reply`:
+
+```python
+result = json.loads(cleaned)
 ```
-git tag tp1-submitted
-git push origin tp1-submitted
-```
 
-Tags the course uses: `intent-spec`, `tp1-submitted`, `tp2-submitted`, `portfolio-final`.
+Just before this line, the program removes any code-fence marks from the AI's reply. This line then tries to turn what's left into structured data. If anything else is in the text, like an extra sentence or a cut-off word, it fails, and the program reports "reply is not JSON." This is where my "formatting okay, no extra language" rule actually lives.
 
-## Running the agent
+## Files
 
-Copy `.claude/settings.local.json.example` to `.claude/settings.local.json` and fill in your OpenRouter key and model slugs, or use the `orclaude` launcher from the [course repository](https://github.com/kousen/ai-integration-course/tree/main/scripts).
+- `classifier.py`: the classifier
+- `eval.py`: the eval runner
+- `cases.json`: the five cases
+- `CHECKS.md`: run results and the case-or-model call on each failure
+- `DECISIONS.md`: my decisions at each review point
+- `intent/classifier.md`, `spec.md`: the approved intent and spec

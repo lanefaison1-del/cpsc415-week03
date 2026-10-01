@@ -67,5 +67,14 @@ My decisions at each review point, recorded as I gave them. Source material for 
 
 **Result:** recorded as a model error in `CHECKS.md`. The optional error-message change was not taken.
 
+## 7. README wording (Oct 1, 2026)
+
+**Options I was given:** draft wording for the spec correction, and two lines of code to explain. A: `result = json.loads(cleaned)` in `classifier.py`, where the reply is read (recommended, because it connects the spec correction to the MiMo failure). B: `if result["category"] not in case["categories"]:` in `eval.py`, where a case is judged.
+
+**My response, verbatim:**
+> wording fine
+
+**Result:** the drafted wording went into the README as written, with line A, the recommended line.
+
 ## Conventions note
 The Conventions section of CLAUDE.md uses the defaults from my lab guide (Python, MiniMax as default, snake_case file names), not choices confirmed with a team.
